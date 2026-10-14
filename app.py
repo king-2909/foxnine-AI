@@ -44,20 +44,27 @@ api_key = st.text_input("🔑 Masukkan Google Gemini API Key Kamu (Gratis di Goo
 if api_key:
     client = genai.Client(api_key=api_key.strip())
 
-    # Fungsi untuk mencari model teks yang tersedia secara otomatis
-    def get_active_model():
+    # Fungsi cerdas memilih model yang benar-benar aktif & terbaru
+    def get_valid_model():
         try:
-            # Mengambil daftar semua model yang tersedia di API
-            models = client.models.list()
-            for m in models:
-                # Pilih model flash atau pro yang mendukung pembuatan konten
-                if "flash" in m.name.lower() or "pro" in m.name.lower():
-                    return m.name
-            return "gemini-3.8-flash"  # Fallback default jika tidak terdeteksi
+            available_models = [m.name for m in client.models.list()]
+            
+            # Prioritas 1: Gunakan model rekomendasi Google saat ini
+            for name in available_models:
+                if "gemini-3.8-flash" in name:
+                    return name
+            
+            # Prioritas 2: Cari model versi 3.x lainnya jika ada
+            for name in available_models:
+                if "gemini-3" in name and "flash" in name:
+                    return name
+                    
+            # Fallback jika tidak terdeteksi
+            return "gemini-3.8-flash"
         except Exception:
             return "gemini-3.8-flash"
 
-    selected_model = get_active_model()
+    selected_model = get_valid_model()
 
     if "messages" not in st.session_state:
         st.session_state.messages = []
