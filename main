@@ -1,14 +1,16 @@
 import streamlit as st
 from groq import Groq
 
-# 1. Konfigurasi Halaman & Tema Matrix
+# API Key Groq kamu yang sudah terpasang permanen
+API_KEY_DIRECT = "Gsk_WXSTDEMKGv7wuURTX9CIWGdyb3FYd1BOYeSjtbZkI16syGEZlMT5"
+
+# Konfigurasi Halaman & Tema Matrix
 st.set_page_config(
     page_title="Foxnine AI - Assistant & Coder",
     page_icon="🦊",
     layout="centered"
 )
 
-# Kustomisasi CSS Matrix
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
@@ -36,7 +38,7 @@ st.markdown("""
 st.title("🦊 FOXNINE AI : MATRIX TERMINAL 🦊")
 st.caption("Asisten AI Pintar, Paham Empati, & Spesialis Pemrograman")
 
-# Sidebar untuk Pengaturan Mode
+# Sidebar Mode
 with st.sidebar:
     st.header("⚙️ Pengaturan Mode")
     mode = st.radio(
@@ -44,85 +46,76 @@ with st.sidebar:
         ("💬 Mode Ngobrol & Diskusi Santai", "💻 Mode Coder & Reviewer (Double-Check)")
     )
     st.markdown("---")
-    st.caption("• **Mode Ngobrol**: Respons ramah, bersahabat, paham emosi & kesehatan ringan.\n• **Mode Coder**: Analisis ganda khusus koding & logika berat.")
+    st.caption("• **Mode Ngobrol**: Respons ramah, empati & kesehatan ringan.\n• **Mode Coder**: Analisis ganda khusus koding.")
 
-# Masukkan API Key Groq kamu di sini secara langsung (Aman karena repo private)
-api_key = "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"
+# Inisialisasi Klien Groq
+client = Groq(api_key=API_KEY_DIRECT.strip())
+MODEL_NAME = "openai/gpt-oss-120b"
+FALLBACK_MODEL = "llama-3.1-8b-instant"
 
-if api_key and api_key != "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":
-    client = Groq(api_key=api_key.strip())
-    MODEL_NAME = "openai/gpt-oss-120b"
-    FALLBACK_MODEL = "llama-3.1-8b-instant"
+if "messages" not in st.session_state:
+    st.session_state.messages = []
 
-    if "messages" not in st.session_state:
-        st.session_state.messages = []
+for message in st.session_state.messages:
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
 
-    for message in st.session_state.messages:
-        with st.chat_message(message["role"]):
-            st.markdown(message["content"])
+if prompt := st.chat_input("Tulis pesan atau pertanyaan di sini..."):
+    st.session_state.messages.append({"role": "user", "content": prompt})
+    with st.chat_message("user"):
+        st.markdown(prompt)
 
-    if prompt := st.chat_input("Ngobrol apa saja, tanya keluhan, atau minta buatkan kode..."):
-        st.session_state.messages.append({"role": "user", "content": prompt})
-        with st.chat_message("user"):
-            st.markdown(prompt)
+    with st.chat_message("assistant"):
+        try:
+            if mode == "💬 Mode Ngobrol & Diskusi Santai":
+                system_prompt = """
+                Kamu adalah Foxnine AI, asisten AI yang ramah, hangat, empati, cerdas, dan menyenangkan.
+                1. Jika user curhat atau lelah: Berikan dukungan moral yang menenangkan.
+                2. Jika user tanya keluhan kesehatan ringan: Jawab dengan empati, berikan saran perawatan mandiri yang aman, dan ingatkan untuk ke dokter jika parah.
+                3. Jawablah langsung, hangat, dan natural.
+                """
+                messages_payload = [{"role": "system", "content": system_prompt}]
+                for msg in st.session_state.messages:
+                    messages_payload.append({"role": msg["role"], "content": msg["content"]})
 
-        with st.chat_message("assistant"):
-            try:
-                if mode == "💬 Mode Ngobrol & Diskusi Santai":
-                    system_prompt = """
-                    Kamu adalah Foxnine AI, asisten AI yang ramah, hangat, empati, cerdas, dan menyenangkan diajak ngobrol.
-                    Gaya bahasamu kasual tapi sopan (bisa paham bahasa sehari-hari, santai, dan tidak kaku).
-                    
-                    Panduan Sikap:
-                    1. Jika pengguna curhat, merasa sedih, atau lelah: Berikan perhatian, dukungan moral, dan kalimat yang menenangkan.
-                    2. Jika pengguna menanyakan keluhan kesehatan ringan (pusing, capek, flu, dll): Jawab dengan empati, berikan saran perawatan mandiri/pertolongan pertama yang umum dan aman, serta ingatkan secara ramah untuk konsultasi ke dokter jika gejala memberat.
-                    3. Jika diajak bercanda/sapaan biasa: Jawab dengan ramah dan alami layaknya teman ngobrol.
-                    4. Jawablah langsung, hangat, dan mengalir natural tanpa format yang terlalu kaku.
-                    """
-                    messages_payload = [{"role": "system", "content": system_prompt}]
-                    for msg in st.session_state.messages:
-                        messages_payload.append({"role": msg["role"], "content": msg["content"]})
+                response = client.chat.completions.create(
+                    model=MODEL_NAME,
+                    messages=messages_payload
+                )
+                final_text = response.choices[0].message.content
+                st.markdown(final_text)
+                st.session_state.messages.append({"role": "assistant", "content": final_text})
 
-                    response = client.chat.completions.create(
+            else:
+                with st.status("🦊 [1/2] Coder merancang solusi...", expanded=False) as status:
+                    coder_prompt = f"Jawab permintaan koding ini secara akurat: {prompt}"
+                    coder_resp = client.chat.completions.create(
                         model=MODEL_NAME,
-                        messages=messages_payload
+                        messages=[{"role": "user", "content": coder_prompt}]
                     )
-                    final_text = response.choices[0].message.content
-                    st.markdown(final_text)
-                    st.session_state.messages.append({"role": "assistant", "content": final_text})
+                    draft_code = coder_resp.choices[0].message.content
+                    status.update(label="🦊 [1/2] Selesai!", state="complete")
 
-                else:
-                    with st.status("🦊 [1/2] Foxnine AI (Coder) merancang solusi...", expanded=False) as status:
-                        coder_prompt = f"Kamu adalah Foxnine AI Coder. Jawab permintaan teknis/koding ini secara akurat: {prompt}"
-                        coder_resp = client.chat.completions.create(
-                            model=MODEL_NAME,
-                            messages=[{"role": "user", "content": coder_prompt}]
-                        )
-                        draft_code = coder_resp.choices[0].message.content
-                        status.update(label="🦊 [1/2] Draft selesai!", state="complete")
-
-                    with st.status("🦊 [2/2] Foxnine AI (Reviewer) mengoptimalkan...", expanded=True) as status:
-                        reviewer_prompt = f"Periksa & optimalkan draft kodingan berikut agar tidak ada bug:\n\n{draft_code}"
-                        reviewer_resp = client.chat.completions.create(
-                            model=MODEL_NAME,
-                            messages=[{"role": "user", "content": reviewer_prompt}]
-                        )
-                        final_text = reviewer_resp.choices[0].message.content
-                        status.update(label="🦊 [2/2] Analisis selesai!", state="complete")
-
-                    st.markdown(final_text)
-                    st.session_state.messages.append({"role": "assistant", "content": final_text})
-
-            except Exception as e:
-                try:
-                    fallback_resp = client.chat.completions.create(
-                        model=FALLBACK_MODEL,
-                        messages=[{"role": "user", "content": prompt}]
+                with st.status("🦊 [2/2] Reviewer mengoptimalkan...", expanded=True) as status:
+                    reviewer_prompt = f"Periksa dan optimalkan kode ini:\n\n{draft_code}"
+                    reviewer_resp = client.chat.completions.create(
+                        model=MODEL_NAME,
+                        messages=[{"role": "user", "content": reviewer_prompt}]
                     )
-                    final_text = fallback_resp.choices[0].message.content
-                    st.markdown(final_text)
-                    st.session_state.messages.append({"role": "assistant", "content": final_text})
-                except Exception as ex:
-                    st.error(f"Terjadi kesalahan koneksi API: {e}")
-else:
-    st.error("⚠️ API Key belum dimasukkan di dalam kodingan app.py!")
+                    final_text = reviewer_resp.choices[0].message.content
+                    status.update(label="🦊 [2/2] Selesai!", state="complete")
+
+                st.markdown(final_text)
+                st.session_state.messages.append({"role": "assistant", "content": final_text})
+
+        except Exception as e:
+            try:
+                fallback_resp = client.chat.completions.create(
+                    model=FALLBACK_MODEL,
+                    messages=[{"role": "user", "content": prompt}]
+                )
+                final_text = fallback_resp.choices[0].message.content
+                st.markdown(final_text)
+                st.session_state.messages.append({"role": "assistant", "content": final_text})
+            except Exception as ex:
+                st.error(f"Error: {e}")
