@@ -1,159 +1,137 @@
-
-import os
 import streamlit as st
-from google import genai
-from google.genai import types
+from groq import Groq
 
-# 1. Konfigurasi Halaman & Tema Matrix Terang
+# 1. Konfigurasi Halaman & Tema Matrix
 st.set_page_config(
-    page_title="Foxnine AI - Coder & Assistant",
+    page_title="Foxnine AI - Assistant & Coder",
     page_icon="🦊",
     layout="centered"
 )
 
-# Kustomisasi CSS ala Matrix (Gaya Terang, Kontras Tinggi, Neon Hijau)
+# Kustomisasi CSS Matrix
 st.markdown("""
-    <style>
+<style>
     @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
-
-    /* Tampilan Global */
     html, body, [class*="css"] {
         font-family: 'Share Tech Mono', monospace;
-        background-color: #031508;
-        color: #d1ffd6;
     }
-
-    /* Judul Utama */
-    .main-title {
+    .stApp {
+        background-color: #0d1117;
         color: #00ff66;
-        text-shadow: 0 0 10px #00ff66, 0 0 20px #005511;
-        text-align: center;
-        font-size: 2.2rem;
+    }
+    .stTextInput input {
+        color: #00ff66;
+        background-color: #161b22;
+        border: 1px solid #00ff66;
+    }
+    .stButton button {
+        background-color: #00ff66;
+        color: #0d1117;
         font-weight: bold;
-        margin-bottom: 0px;
+        border-radius: 5px;
     }
-    .sub-title {
-        color: #8affaa;
-        text-align: center;
-        font-size: 1rem;
-        margin-bottom: 25px;
-    }
-
-    /* Kotak Input API Key & Chat */
-    .stTextInput input, .stChatInput input {
-        background-color: #052b0f !important;
-        color: #ffffff !important;
-        border: 2px solid #00ff66 !important;
-        border-radius: 6px;
-    }
-
-    /* Styling Kotak Pesan AI & User */
-    div.stChatMessage {
-        background-color: #072e12;
-        border: 1px solid #145a28;
-        border-radius: 8px;
-        padding: 10px;
-        margin-bottom: 10px;
-        box-shadow: 0 0 8px rgba(0, 255, 102, 0.15);
-    }
-    
-    /* Warna teks di dalam chat */
-    div.stChatMessage p, div.stChatMessage span, div.stChatMessage li {
-        color: #e2ffe6 !important;
-        font-size: 1.05rem;
-    }
-
-    /* Kotak Blok Kode */
-    pre {
-        background-color: #010d04 !important;
-        border: 2px solid #00ff66 !important;
-        border-radius: 6px !important;
-        box-shadow: inset 0 0 10px rgba(0, 255, 102, 0.2);
-    }
-    code {
-        color: #5fff89 !important;
-    }
-    </style>
+</style>
 """, unsafe_allow_html=True)
 
-# Header Tampilan Matrix dengan Nama Foxnine AI
-st.markdown('<p class="main-title">🦊 FOXNINE AI : MATRIX TERMINAL 🦊</p>', unsafe_allow_html=True)
-st.markdown('<p class="sub-title">Spesialis Pemrograman (Double-Check) & Pelajaran Umum</p>', unsafe_allow_html=True)
+st.title("🦊 FOXNINE AI : MATRIX TERMINAL 🦊")
+st.caption("Asisten AI Pintar, Paham Empati, & Spesialis Pemrograman")
 
-# 2. Input API Key (Mengambil dari Environment atau Input Manual)
-api_key = os.environ.get("GEMINI_API_KEY")
+# Sidebar untuk Pengaturan Mode
+with st.sidebar:
+    st.header("⚙️ Pengaturan Mode")
+    mode = st.radio(
+        "Pilih Mode Operasi:",
+        ("💬 Mode Ngobrol & Diskusi Santai", "💻 Mode Coder & Reviewer (Double-Check)")
+    )
+    st.markdown("---")
+    st.caption("• **Mode Ngobrol**: Respons ramah, bersahabat, paham emosi & kesehatan ringan.\n• **Mode Coder**: Analisis ganda khusus koding & logika berat.")
 
+# CARA BACA SECRETS YANG BENAR:
+# Kodenya akan mengecek secrets. Jika tidak ditemukan, baru minta input manual.
+api_key = ""
+if "GROQ_API_KEY" in st.secrets:
+    api_key = st.secrets["GROQ_API_KEY"]
+elif "groq_api_key" in st.secrets:
+    api_key = st.secrets["groq_api_key"]
+
+# Jika Secrets belum ada/salah ketik, tampilkan input manual sebagai cadangan
 if not api_key:
-    api_key = st.text_input("🔑 Masukkan Google Gemini API Key Kamu (Gratis di Google AI Studio):", type="password")
+    api_key = st.text_input("🔑 Masukkan Groq API Key Kamu (gsk_...):", type="password")
 
 if api_key:
-    # Inisialisasi Google GenAI Client
-    client = genai.Client(api_key=api_key)
-    MODEL_NAME = "gemini-2.5-flash"
+    client = Groq(api_key=api_key.strip())
+    MODEL_NAME = "openai/gpt-oss-120b"
+    FALLBACK_MODEL = "llama-3.1-8b-instant"
 
-    # Inisialisasi Riwayat Percakapan
     if "messages" not in st.session_state:
         st.session_state.messages = []
 
-    # Tampilkan riwayat chat sebelumnya
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
 
-    # Kotak Input Chat Pengguna
-    if prompt := st.chat_input("Tanyakan soal koding, matematika, atau pelajaran lainnya ke Foxnine AI..."):
-        # Simpan dan tampilkan pesan pengguna
+    if prompt := st.chat_input("Ngobrol apa saja, tanya keluhan, atau minta buatkan kode..."):
         st.session_state.messages.append({"role": "user", "content": prompt})
         with st.chat_message("user"):
             st.markdown(prompt)
 
-        # Proses AI dengan Sistem 2-Langkah (Double-Check)
         with st.chat_message("assistant"):
-            
-            # --- TAHAP 1: Coder Agent ---
-            with st.status("🦊 [1/2] Foxnine AI (Coder) sedang merancang solusi...", expanded=True) as status:
-                try:
-                    coder_response = client.models.generate_content(
-                        model=MODEL_NAME,
-                        contents=prompt,
-                        config=types.GenerateContentConfig(
-                            system_instruction=(
-                                "Kamu adalah Foxnine AI, Senior Software Engineer dan tutor pelajaran umum (Matematika, Sains, dll.). "
-                                "Jika diminta membuat kode, berikan solusi terbaik, bersih, dan terstruktur."
-                            ),
-                            temperature=0.2,
-                        ),
-                    )
-                    draft_text = coder_response.text
-                    st.write("✔ Draf awal berhasil dibuat.")
+            try:
+                if mode == "💬 Mode Ngobrol & Diskusi Santai":
+                    system_prompt = """
+                    Kamu adalah Foxnine AI, asisten AI yang ramah, hangat, empati, cerdas, dan menyenangkan diajak ngobrol.
+                    Gaya bahasamu kasual tapi sopan (bisa paham bahasa sehari-hari, santai, dan tidak kaku).
                     
-                    # --- TAHAP 2: Reviewer Agent (Jika ada kode) ---
-                    if "```" in draft_text:
-                        status.update(label="🔍 [2/2] Foxnine AI (Reviewer) sedang melakukan double-check & audit bug...", state="running")
-                        
-                        reviewer_response = client.models.generate_content(
+                    Panduan Sikap:
+                    1. Jika pengguna curhat, merasa sedih, atau lelah: Berikan perhatian, dukungan moral, dan kalimat yang menenangkan.
+                    2. Jika pengguna menanyakan keluhan kesehatan ringan (pusing, capek, flu, dll): Jawab dengan empati, berikan saran perawatan mandiri/pertolongan pertama yang umum dan aman, serta ingatkan secara ramah untuk konsultasi ke dokter jika gejala memberat.
+                    3. Jika diajak bercanda/sapaan biasa: Jawab dengan ramah dan alami layaknya teman ngobrol.
+                    4. Jawablah langsung, hangat, dan mengalir natural tanpa format yang terlalu kaku.
+                    """
+                    messages_payload = [{"role": "system", "content": system_prompt}]
+                    for msg in st.session_state.messages:
+                        messages_payload.append({"role": msg["role"], "content": msg["content"]})
+
+                    response = client.chat.completions.create(
+                        model=MODEL_NAME,
+                        messages=messages_payload
+                    )
+                    final_text = response.choices[0].message.content
+                    st.markdown(final_text)
+                    st.session_state.messages.append({"role": "assistant", "content": final_text})
+
+                else:
+                    with st.status("🦊 [1/2] Foxnine AI (Coder) merancang solusi...", expanded=False) as status:
+                        coder_prompt = f"Kamu adalah Foxnine AI Coder. Jawab permintaan teknis/koding ini secara akurat: {prompt}"
+                        coder_resp = client.chat.completions.create(
                             model=MODEL_NAME,
-                            contents=f"Tolong review, validasi, dan perbaiki draf kode berikut jika ada bug atau kurang efisien:\n\n{draft_text}",
-                            config=types.GenerateContentConfig(
-                                system_instruction=(
-                                    "Kamu adalah Foxnine AI (Code Reviewer/Auditor yang sangat teliti). "
-                                    "Periksa draf kode untuk mendeteksi bug, kesalahan logika, atau efisiensi. "
-                                    "Berikan versi final kode yang sudah benar-benar aman dan optimal."
-                                ),
-                                temperature=0.1,
-                            ),
+                            messages=[{"role": "user", "content": coder_prompt}]
                         )
-                        final_response = reviewer_response.text
-                        status.update(label="✅ Selesai! Foxnine AI telah memvalidasi kodenya.", state="complete", expanded=False)
-                    else:
-                        final_response = draft_text
-                        status.update(label="✅ Selesai! Pertanyaan diproses oleh Foxnine AI.", state="complete", expanded=False)
+                        draft_code = coder_resp.choices[0].message.content
+                        status.update(label="🦊 [1/2] Draft selesai!", state="complete")
 
-                    # Tampilkan hasil akhir ke layar
-                    st.markdown(final_response)
-                    st.session_state.messages.append({"role": "assistant", "content": final_response})
+                    with st.status("🦊 [2/2] Foxnine AI (Reviewer) mengoptimalkan...", expanded=True) as status:
+                        reviewer_prompt = f"Periksa & optimalkan draft kodingan berikut agar tidak ada bug:\n\n{draft_code}"
+                        reviewer_resp = client.chat.completions.create(
+                            model=MODEL_NAME,
+                            messages=[{"role": "user", "content": reviewer_prompt}]
+                        )
+                        final_text = reviewer_resp.choices[0].message.content
+                        status.update(label="🦊 [2/2] Analisis selesai!", state="complete")
 
-                except Exception as e:
+                    st.markdown(final_text)
+                    st.session_state.messages.append({"role": "assistant", "content": final_text})
+
+            except Exception as e:
+                try:
+                    fallback_resp = client.chat.completions.create(
+                        model=FALLBACK_MODEL,
+                        messages=[{"role": "user", "content": prompt}]
+                    )
+                    final_text = fallback_resp.choices[0].message.content
+                    st.markdown(final_text)
+                    st.session_state.messages.append({"role": "assistant", "content": final_text})
+                except Exception as ex:
                     st.error(f"Terjadi kesalahan koneksi API: {e}")
 else:
-    st.warning("⚠️ Masukkan API Key terlebih dahulu untuk mengaktifkan terminal Foxnine AI.")
+    st.info("Silakan masukkan Groq API Key di atas atau atur di Streamlit Secrets.")
