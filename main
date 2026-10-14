@@ -46,15 +46,15 @@ with st.sidebar:
     st.markdown("---")
     st.caption("• **Mode Ngobrol**: Respons ramah, bersahabat, paham emosi & kesehatan ringan.\n• **Mode Coder**: Analisis ganda khusus koding & logika berat.")
 
-# CARA BACA SECRETS YANG BENAR:
-# Kodenya akan mengecek secrets. Jika tidak ditemukan, baru minta input manual.
+# Deteksi API Key dari Streamlit Secrets (Pemeriksaan Otomatis)
 api_key = ""
-if "GROQ_API_KEY" in st.secrets:
-    api_key = st.secrets["GROQ_API_KEY"]
-elif "groq_api_key" in st.secrets:
-    api_key = st.secrets["groq_api_key"]
+if hasattr(st, "secrets"):
+    if "GROQ_API_KEY" in st.secrets:
+        api_key = st.secrets["GROQ_API_KEY"]
+    elif "groq_api_key" in st.secrets:
+        api_key = st.secrets["groq_api_key"]
 
-# Jika Secrets belum ada/salah ketik, tampilkan input manual sebagai cadangan
+# Jika Secrets belum terdeteksi, tampilkan input manual sebagai backup
 if not api_key:
     api_key = st.text_input("🔑 Masukkan Groq API Key Kamu (gsk_...):", type="password")
 
