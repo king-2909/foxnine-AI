@@ -49,7 +49,7 @@ with st.sidebar:
 # Masukkan API Key Groq kamu di sini secara langsung (Aman karena repo private)
 api_key = "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"
 
-if api_key and api_key != "gsk_GANTI_DENGAN_API_KEY_GROQ_ASLI_KAMU":
+if api_key and api_key != "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":
     client = Groq(api_key=api_key.strip())
     MODEL_NAME = "openai/gpt-oss-120b"
     FALLBACK_MODEL = "llama-3.1-8b-instant"
