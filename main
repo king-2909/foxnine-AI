@@ -47,7 +47,7 @@ with st.sidebar:
     st.caption("• **Mode Ngobrol**: Respons ramah, bersahabat, paham emosi & kesehatan ringan.\n• **Mode Coder**: Analisis ganda khusus koding & logika berat.")
 
 # Masukkan API Key Groq kamu di sini secara langsung (Aman karena repo private)
-api_key = "gsk_GANTI_DENGAN_API_KEY_GROQ_ASLI_KAMU"
+api_key = "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"
 
 if api_key and api_key != "gsk_GANTI_DENGAN_API_KEY_GROQ_ASLI_KAMU":
     client = Groq(api_key=api_key.strip())
