@@ -41,7 +41,9 @@ api_key = st.text_input("🔑 Masukkan Groq API Key Kamu (gsk_...):", type="pass
 
 if api_key:
     client = Groq(api_key=api_key.strip())
-    MODEL_NAME = "llama-3.3-70b-versatile"
+    
+    # Model aktif Groq
+    MODEL_NAME = "llama-3.3-70b-specdec"
 
     if "messages" not in st.session_state:
         st.session_state.messages = []
@@ -89,6 +91,16 @@ if api_key:
                 st.session_state.messages.append({"role": "assistant", "content": final_text})
 
             except Exception as e:
-                st.error(f"Terjadi kesalahan koneksi API: {e}")
+                # Fallback ke model llama3-70b jika specdec bermasalah
+                try:
+                    FALLBACK_MODEL = "llama3-70b-8192"
+                    coder_response = client.chat.completions.create(
+                        model=FALLBACK_MODEL,
+                        messages=[{"role": "user", "content": prompt}]
+                    )
+                    st.markdown(coder_response.choices[0].message.content)
+                    st.session_state.messages.append({"role": "assistant", "content": coder_response.choices[0].message.content})
+                except Exception as ex:
+                    st.error(f"Terjadi kesalahan koneksi API: {e}")
 else:
     st.info("Silakan masukkan Groq API Key kamu di atas untuk mulai berinteraksi dengan Foxnine AI.")
