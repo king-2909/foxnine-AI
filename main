@@ -1,8 +1,8 @@
 import streamlit as st
 from groq import Groq
 
-# API Key Groq kamu yang sudah terpasang permanen
-API_KEY_DIRECT = "Gsk_WXSTDEMKGv7wuURTX9CIWGdyb3FYd1BOYeSjtbZkI16syGEZlMT5"
+# 🔑 API Key Groq yang sudah diperbaiki (huruf 'g' kecil)
+API_KEY_DIRECT = "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"
 
 # Konfigurasi Halaman & Tema Matrix
 st.set_page_config(
