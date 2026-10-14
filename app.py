@@ -42,8 +42,8 @@ api_key = st.text_input("🔑 Masukkan Groq API Key Kamu (gsk_...):", type="pass
 if api_key:
     client = Groq(api_key=api_key.strip())
     
-    # Model aktif Groq
-    MODEL_NAME = "llama-3.3-70b-specdec"
+    # Model aktif resmi di Groq
+    MODEL_NAME = "openai/gpt-oss-120b"
 
     if "messages" not in st.session_state:
         st.session_state.messages = []
@@ -91,9 +91,9 @@ if api_key:
                 st.session_state.messages.append({"role": "assistant", "content": final_text})
 
             except Exception as e:
-                # Fallback ke model llama3-70b jika specdec bermasalah
+                # Fallback ke model instan jika model utama ada kendala
                 try:
-                    FALLBACK_MODEL = "llama3-70b-8192"
+                    FALLBACK_MODEL = "llama-3.1-8b-instant"
                     coder_response = client.chat.completions.create(
                         model=FALLBACK_MODEL,
                         messages=[{"role": "user", "content": prompt}]
