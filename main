@@ -46,19 +46,10 @@ with st.sidebar:
     st.markdown("---")
     st.caption("• **Mode Ngobrol**: Respons ramah, bersahabat, paham emosi & kesehatan ringan.\n• **Mode Coder**: Analisis ganda khusus koding & logika berat.")
 
-# Deteksi API Key dari Streamlit Secrets (Pemeriksaan Otomatis)
-api_key = ""
-if hasattr(st, "secrets"):
-    if "GROQ_API_KEY" in st.secrets:
-        api_key = st.secrets["GROQ_API_KEY"]
-    elif "groq_api_key" in st.secrets:
-        api_key = st.secrets["groq_api_key"]
+# Masukkan API Key Groq kamu di sini secara langsung (Aman karena repo private)
+api_key = "gsk_GANTI_DENGAN_API_KEY_GROQ_ASLI_KAMU"
 
-# Jika Secrets belum terdeteksi, tampilkan input manual sebagai backup
-if not api_key:
-    api_key = st.text_input("🔑 Masukkan Groq API Key Kamu (gsk_...):", type="password")
-
-if api_key:
+if api_key and api_key != "gsk_GANTI_DENGAN_API_KEY_GROQ_ASLI_KAMU":
     client = Groq(api_key=api_key.strip())
     MODEL_NAME = "openai/gpt-oss-120b"
     FALLBACK_MODEL = "llama-3.1-8b-instant"
@@ -134,4 +125,4 @@ if api_key:
                 except Exception as ex:
                     st.error(f"Terjadi kesalahan koneksi API: {e}")
 else:
-    st.info("Silakan masukkan Groq API Key di atas atau atur di Streamlit Secrets.")
+    st.error("⚠️ API Key belum dimasukkan di dalam kodingan app.py!")
