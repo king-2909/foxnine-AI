@@ -88,7 +88,7 @@ if not api_key:
 if api_key:
     # Inisialisasi Google GenAI Client
     client = genai.Client(api_key=api_key)
-    MODEL_NAME = "gemini-1.5-pro"
+    MODEL_NAME = "gemini-2.5-flash"
 
     # Inisialisasi Riwayat Percakapan
     if "messages" not in st.session_state:
