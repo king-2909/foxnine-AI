@@ -1,9 +1,7 @@
-import os
 import streamlit as st
-from google import genai
-from google.genai import types
+from groq import Groq
 
-# 1. Konfigurasi Halaman & Tema Matrix Terang
+# 1. Konfigurasi Halaman & Tema Matrix
 st.set_page_config(
     page_title="Foxnine AI - Coder & Assistant",
     page_icon="🦊",
@@ -36,35 +34,14 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 st.title("🦊 FOXNINE AI : MATRIX TERMINAL 🦊")
-st.caption("Spesialis Pemrograman (Double-Check) & Pelajaran Umum")
+st.caption("Spesialis Pemrograman (Double-Check) & Pelajaran Umum - Powered by Groq Speed")
 
 # Input API Key
-api_key = st.text_input("🔑 Masukkan Google Gemini API Key Kamu (Gratis di Google AI Studio):", type="password")
+api_key = st.text_input("🔑 Masukkan Groq API Key Kamu (gsk_...):", type="password")
 
 if api_key:
-    client = genai.Client(api_key=api_key.strip())
-
-    # Fungsi cerdas memilih model yang benar-benar aktif & terbaru
-    def get_valid_model():
-        try:
-            available_models = [m.name for m in client.models.list()]
-            
-            # Prioritas 1: Gunakan model rekomendasi Google saat ini
-            for name in available_models:
-                if "gemini-3.8-flash" in name:
-                    return name
-            
-            # Prioritas 2: Cari model versi 3.x lainnya jika ada
-            for name in available_models:
-                if "gemini-3" in name and "flash" in name:
-                    return name
-                    
-            # Fallback jika tidak terdeteksi
-            return "gemini-3.8-flash"
-        except Exception:
-            return "gemini-3.8-flash"
-
-    selected_model = get_valid_model()
+    client = Groq(api_key=api_key.strip())
+    MODEL_NAME = "llama-3.3-70b-versatile"
 
     if "messages" not in st.session_state:
         st.session_state.messages = []
@@ -83,11 +60,11 @@ if api_key:
                 # Step 1: Coder Agent
                 with st.status("🦊 [1/2] Foxnine AI (Coder) sedang merancang solusi...", expanded=False) as status:
                     coder_prompt = f"Kamu adalah Foxnine AI Coder. Jawab permintaan user ini sebaik dan seakurat mungkin: {prompt}"
-                    coder_response = client.models.generate_content(
-                        model=selected_model,
-                        contents=coder_prompt
+                    coder_response = client.chat.completions.create(
+                        model=MODEL_NAME,
+                        messages=[{"role": "user", "content": coder_prompt}]
                     )
-                    draft_code = coder_response.text
+                    draft_code = coder_response.choices[0].message.content
                     status.update(label="🦊 [1/2] Draft awal selesai dirancang!", state="complete")
 
                 # Step 2: Reviewer Agent
@@ -101,16 +78,17 @@ if api_key:
                     
                     Tolong berikan hasil akhir yang sudah diperbaiki/dioptimalkan dengan format yang rapi dan profesional!
                     """
-                    final_response = client.models.generate_content(
-                        model=selected_model,
-                        contents=reviewer_prompt
+                    final_response = client.chat.completions.create(
+                        model=MODEL_NAME,
+                        messages=[{"role": "user", "content": reviewer_prompt}]
                     )
+                    final_text = final_response.choices[0].message.content
                     status.update(label="🦊 [2/2] Analisis selesai!", state="complete")
 
-                st.markdown(final_response.text)
-                st.session_state.messages.append({"role": "assistant", "content": final_response.text})
+                st.markdown(final_text)
+                st.session_state.messages.append({"role": "assistant", "content": final_text})
 
             except Exception as e:
                 st.error(f"Terjadi kesalahan koneksi API: {e}")
 else:
-    st.info("Silakan masukkan API Key kamu di atas untuk mulai berinteraksi dengan Foxnine AI.")
+    st.info("Silakan masukkan Groq API Key kamu di atas untuk mulai berinteraksi dengan Foxnine AI.")
