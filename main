@@ -1,8 +1,9 @@
 import streamlit as st
 from groq import Groq
 
-# 🔑 API Key Groq yang sudah diperbaiki (huruf 'g' kecil)
-API_KEY_DIRECT = "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"
+# langsung masukan key di sini tanpa ada kondisi if/else yang memunculkan text_input
+API_KEY_DIRECT = "gsk_WXSTEDEMKGv7wuURTX9CIWGdyb3FYd1BOYeSjtbZkI16syGEZLMT5"
+client = groq(api_key=API_KEY_DIRECT.strip())
 
 # Konfigurasi Halaman & Tema Matrix
 st.set_page_config(
