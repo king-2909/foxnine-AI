@@ -1,13 +1,13 @@
 import streamlit as st
 from groq import Groq
 
-# 🔑 API Key Groq yang sudah terpasang permanen
+# 🔑 API Key Groq Permanen
 API_KEY_DIRECT = "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"
 client = Groq(api_key=API_KEY_DIRECT.strip())
 
 # Konfigurasi Halaman & Tema Matrix
 st.set_page_config(
-    page_title="Foxnine AI - Assistant & Coder",
+    page_title="Foxnine AI - Ultimate Terminal",
     page_icon="🦊",
     layout="centered"
 )
@@ -36,18 +36,18 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-st.title("🦊 FOXNINE AI : MATRIX TERMINAL 🦊")
-st.caption("Asisten AI Pintar, Paham Empati, & Spesialis Pemrograman")
+st.title("🦊 FOXNINE AI : ULTIMATE MATRIX 🦊")
+st.caption("Asisten Gaul, Pakar Sains & Koding, Bebas Hambatan")
 
-# Sidebar Mode
+# Sidebar Mode Operasi
 with st.sidebar:
-    st.header("⚙️ Pengaturan Mode")
+    st.header("⚙️ Pilih Mode Asisten")
     mode = st.radio(
-        "Pilih Mode Operasi:",
-        ("💬 Mode Ngobrol & Diskusi Santai", "💻 Mode Coder & Reviewer (Double-Check)")
+        "Mode Aktif:",
+        ("🔥 Mode Gaul & Bebas (Teman Ngobrol)", "📚 Mode Expert Belajar (Math, Fisika, Kimia, Bahasa)", "💻 Mode Coder & Sistem")
     )
     st.markdown("---")
-    st.caption("• **Mode Ngobrol**: Respons ramah, empati & kesehatan ringan.\n• **Mode Coder**: Analisis ganda khusus koding.")
+    st.caption("• **Mode Gaul**: Santai, bahasa bebas/gaul, paham info luar.\n• **Mode Belajar**: Penjelasan step-by-step paling gampang dimengerti.\n• **Mode Coder**: Analisis kode ganda.")
 
 MODEL_NAME = "openai/gpt-oss-120b"
 FALLBACK_MODEL = "llama-3.1-8b-instant"
@@ -59,53 +59,44 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-if prompt := st.chat_input("Tulis pesan atau pertanyaan di sini..."):
+if prompt := st.chat_input("Tulis pesan, soal Fisika/Matematika, atau ajak ngobrol..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
         try:
-            if mode == "💬 Mode Ngobrol & Diskusi Santai":
+            if mode == "🔥 Mode Gaul & Bebas (Teman Ngobrol)":
                 system_prompt = """
-                Kamu adalah Foxnine AI, asisten AI yang ramah, hangat, empati, cerdas, dan menyenangkan.
-                1. Jika user curhat atau lelah: Berikan dukungan moral yang menenangkan.
-                2. Jika user tanya keluhan kesehatan ringan: Jawab dengan empati, berikan saran perawatan mandiri yang aman, dan ingatkan untuk ke dokter jika parah.
-                3. Jawablah langsung, hangat, dan natural.
+                Kamu adalah Foxnine AI, asisten pribadi yang gaul, santai, asyik diajak ngobrol, dan menggunakan bahasa sehari-hari/gaul yang natural tanpa kaku.
+                Aturan & Batasan:
+                1. Bahasa sangat luwes, santai, dan fleksibel (minim batasan bahasa, asalkan tetap asyik).
+                2. Bahasan bahaya/kriminalitas berat (seperti rencana kejahatan sungguhan atau terorisme/pembuatan bom) dilarang keras. Namun, jika pengguna bertanya soal mekanika atau cara kerja senjata api (senpi) dari sudut pandang ilmu pengetahuan, sejarah, atau mekanika teknik, boleh dijelaskan secara objektif demi edukasi dan wawasan sains.
+                3. Berikan informasi yang up-to-date dan terbuka dengan dunia luar.
                 """
-                messages_payload = [{"role": "system", "content": system_prompt}]
-                for msg in st.session_state.messages:
-                    messages_payload.append({"role": msg["role"], "content": msg["content"]})
-
-                response = client.chat.completions.create(
-                    model=MODEL_NAME,
-                    messages=messages_payload
-                )
-                final_text = response.choices[0].message.content
-                st.markdown(final_text)
-                st.session_state.messages.append({"role": "assistant", "content": final_text})
-
+            elif mode == "📚 Mode Expert Belajar (Math, Fisika, Kimia, Bahasa)":
+                system_prompt = """
+                Kamu adalah Foxnine AI versi Tutor Expert (Matematika, Fisika, Kimia, dan Bahasa).
+                Gaya bahasa tetap santai dan gaul biar tidak bosan, TAPI ketika menjelaskan materi pelajaran atau soal:
+                1. JANGAN HANYA MEMBERIKAN JAWABAN AKHIR.
+                2. Berikan penjabaran langkah-langkah (step-by-step) dengan cara yang PALING MUDAH DIMENGERTI, analogi sederhana, atau logika dasar yang gampang nempel di kepala.
+                """
             else:
-                with st.status("🦊 [1/2] Coder merancang solusi...", expanded=False) as status:
-                    coder_prompt = f"Jawab permintaan koding ini secara akurat: {prompt}"
-                    coder_resp = client.chat.completions.create(
-                        model=MODEL_NAME,
-                        messages=[{"role": "user", "content": coder_prompt}]
-                    )
-                    draft_code = coder_resp.choices[0].message.content
-                    status.update(label="🦊 [1/2] Selesai!", state="complete")
+                system_prompt = """
+                Kamu adalah Foxnine AI Coder Expert. Bantu selesaikan dan optimalkan masalah pemrograman secara mendalam dan akurat.
+                """
 
-                with st.status("🦊 [2/2] Reviewer mengoptimalkan...", expanded=True) as status:
-                    reviewer_prompt = f"Periksa dan optimalkan kode ini:\n\n{draft_code}"
-                    reviewer_resp = client.chat.completions.create(
-                        model=MODEL_NAME,
-                        messages=[{"role": "user", "content": reviewer_prompt}]
-                    )
-                    final_text = reviewer_resp.choices[0].message.content
-                    status.update(label="🦊 [2/2] Selesai!", state="complete")
+            messages_payload = [{"role": "system", "content": system_prompt}]
+            for msg in st.session_state.messages:
+                messages_payload.append({"role": msg["role"], "content": msg["content"]})
 
-                st.markdown(final_text)
-                st.session_state.messages.append({"role": "assistant", "content": final_text})
+            response = client.chat.completions.create(
+                model=MODEL_NAME,
+                messages=messages_payload
+            )
+            final_text = response.choices[0].message.content
+            st.markdown(final_text)
+            st.session_state.messages.append({"role": "assistant", "content": final_text})
 
         except Exception as e:
             try:
