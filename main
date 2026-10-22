@@ -1,9 +1,9 @@
-aimport streamlit as st
+import streamlit as st
 from groq import Groq
 
-# langsung masukan key di sini tanpa ada kondisi if/else yang memunculkan text_input
+# Langsung masukan key di sini menggunakan tanda petik string yang benar
 API_KEY_DIRECT = "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"
-client = groq(api_key=API_KEY_DIRECT.strip())
+client = Groq(api_key=API_KEY_DIRECT.strip())
 
 # Konfigurasi Halaman & Tema Matrix
 st.set_page_config(
@@ -49,8 +49,6 @@ with st.sidebar:
     st.markdown("---")
     st.caption("• **Mode Ngobrol**: Respons ramah, empati & kesehatan ringan.\n• **Mode Coder**: Analisis ganda khusus koding.")
 
-# Inisialisasi Klien Groq
-client = Groq(api_key=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)
 MODEL_NAME = "openai/gpt-oss-120b"
 FALLBACK_MODEL = "llama-3.1-8b-instant"
 
@@ -70,7 +68,8 @@ if prompt := st.chat_input("Tulis pesan atau pertanyaan di sini..."):
         try:
             if mode == "💬 Mode Ngobrol & Diskusi Santai":
                 system_prompt = """
-                Kamu adalah Foxnine AI, asisten AI yang ramah, hangat, empati, cerdas, dan menyenangkan.
+                Kamu adalah Foxnine AI, asisten AI yang ramah, hangat, empati, cerdas, dan menyenangkan, yang dibuat dan dikembangkan oleh William Evan. 
+                Jika ada yang bertanya siapa pembuatmu, penciptamu, atau siapa yang membuatmu, jawablah bahwa kamu dibuat oleh William Evan.
                 1. Jika user curhat atau lelah: Berikan dukungan moral yang menenangkan.
                 2. Jika user tanya keluhan kesehatan ringan: Jawab dengan empati, berikan saran perawatan mandiri yang aman, dan ingatkan untuk ke dokter jika parah.
                 3. Jawablah langsung, hangat, dan natural.
@@ -107,7 +106,8 @@ if prompt := st.chat_input("Tulis pesan atau pertanyaan di sini..."):
                     status.update(label="🦊 [2/2] Selesai!", state="complete")
 
                 st.markdown(final_text)
-                st.session_state.messages.append({"role": "assistant", "content": final_text}
+                st.session_state.messages.append({"role": "assistant", "content": final_text})
+                
         except Exception as e:
             try:
                 fallback_resp = client.chat.completions.create(
