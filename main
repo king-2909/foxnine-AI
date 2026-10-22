@@ -1,4 +1,4 @@
-import streamlit as st
+aimport streamlit as st
 from groq import Groq
 
 # langsung masukan key di sini tanpa ada kondisi if/else yang memunculkan text_input
@@ -107,15 +107,7 @@ if prompt := st.chat_input("Tulis pesan atau pertanyaan di sini..."):
                     status.update(label="🦊 [2/2] Selesai!", state="complete")
 
                 st.markdown(final_text)
-                st.session_state.messages.append({"role": "assistant", "content": final_text})
-                
-chat_history = [
-    {
-        "role": "system",
-        "content": "Kamu adalah Fox Nine AI. Jika ada yang bertanya siapa pembuatmu, penciptamu, atau yang membuatmu, jawablah bahwa kamu dibuat oleh William Evan."
-    }
-]
-
+                st.session_state.messages.append({"role": "assistant", "content": final_text}
         except Exception as e:
             try:
                 fallback_resp = client.chat.completions.create(
