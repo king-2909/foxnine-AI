@@ -50,7 +50,7 @@ with st.sidebar:
     st.caption("• **Mode Ngobrol**: Respons ramah, empati & kesehatan ringan.\n• **Mode Coder**: Analisis ganda khusus koding.")
 
 # Inisialisasi Klien Groq
-client = Groq(api_key=API_KEY_DIRECT.strip())
+client = Groq(api_key=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)
 MODEL_NAME = "openai/gpt-oss-120b"
 FALLBACK_MODEL = "llama-3.1-8b-instant"
 
