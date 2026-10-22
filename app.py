@@ -1,7 +1,7 @@
 import streamlit as st
 from groq import Groq
 
-# 🔑 API Key Groq Permanen
+# API Key Groq Permanen
 API_KEY_DIRECT = "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"
 client = Groq(api_key=API_KEY_DIRECT.strip())
 
@@ -41,13 +41,13 @@ st.caption("Asisten Gaul, Pakar Sains & Koding, Bebas Hambatan")
 
 # Sidebar Mode Operasi
 with st.sidebar:
-    st.header("⚙️ Pilih Mode Asisten")
+    st.header("Pilih Mode Asisten")
     mode = st.radio(
         "Mode Aktif:",
-        ("🔥 Mode Gaul & Bebas (Teman Ngobrol)", "📚 Mode Expert Belajar (Math, Fisika, Kimia, Bahasa)", "💻 Mode Coder & Sistem")
+        (" mode Bebas (Teman Ngobrol)", " Mode Expert Belajar (Math, Fisika, Kimia, Bahasa)", " Mode Coder & Sistem")
     )
     st.markdown("---")
-    st.caption("• **Mode Gaul**: Santai, bahasa bebas/gaul, paham info luar.\n• **Mode Belajar**: Penjelasan step-by-step paling gampang dimengerti.\n• **Mode Coder**: Analisis kode ganda.")
+    st.caption("• **chill**: Santai, bahasa bebas/gaul, paham info luar.\n• **Mode Belajar**: Penjelasan step-by-step paling gampang dimengerti.\n• **Mode Coder**: Analisis kode ganda.")
 
 MODEL_NAME = "openai/gpt-oss-120b"
 FALLBACK_MODEL = "llama-3.1-8b-instant"
@@ -66,7 +66,7 @@ if prompt := st.chat_input("Tulis pesan, soal Fisika/Matematika, atau ajak ngobr
 
     with st.chat_message("assistant"):
         try:
-            if mode == "🔥 Mode Gaul & Bebas (Teman Ngobrol)":
+            if mode == " Mode chill & Bebas (Teman Ngobrol)":
                 system_prompt = """
                 Kamu adalah Foxnine AI, asisten pribadi yang gaul, santai, asyik diajak ngobrol, dan menggunakan bahasa sehari-hari/gaul yang natural tanpa kaku.
                 Aturan & Batasan:
