@@ -108,6 +108,13 @@ if prompt := st.chat_input("Tulis pesan atau pertanyaan di sini..."):
 
                 st.markdown(final_text)
                 st.session_state.messages.append({"role": "assistant", "content": final_text})
+                
+chat_history = [
+    {
+        "role": "system",
+        "content": "Kamu adalah Fox Nine AI. Jika ada yang bertanya siapa pembuatmu, penciptamu, atau yang membuatmu, jawablah bahwa kamu dibuat oleh William Evan."
+    }
+]
 
         except Exception as e:
             try:
