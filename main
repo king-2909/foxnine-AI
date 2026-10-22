@@ -2,7 +2,7 @@ aimport streamlit as st
 from groq import Groq
 
 # langsung masukan key di sini tanpa ada kondisi if/else yang memunculkan text_input
-API_KEY_DIRECT = "gsk_WXSTEDEMKGv7wuURTX9CIWGdyb3FYd1BOYeSjtbZkI16syGEZLMT5"
+API_KEY_DIRECT = "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"
 client = groq(api_key=API_KEY_DIRECT.strip())
 
 # Konfigurasi Halaman & Tema Matrix
