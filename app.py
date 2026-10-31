@@ -1,111 +1,123 @@
+import os
 import streamlit as st
 from groq import Groq
 
-# API Key Groq Permanen
-API_KEY_DIRECT = "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"
-client = Groq(api_key=API_KEY_DIRECT.strip())
+# ---------- API KEY (aman, tidak ditulis di kode) ----------
+# Streamlit Cloud: Settings > Secrets > GROQ_API_KEY = "gsk_..."
+# Lokal: buat file .streamlit/secrets.toml berisi GROQ_API_KEY = "gsk_..."
+API_KEY = st.secrets.get("GROQ_API_KEY") or os.environ.get("GROQ_API_KEY")
+if not API_KEY:
+    st.error("API key belum diatur. Isi GROQ_API_KEY di Secrets dulu ya.")
+    st.stop()
+client = Groq(api_key=API_KEY.strip())
 
-# Konfigurasi Halaman & Tema Matrix
-st.set_page_config(
-    page_title="Foxnine AI - Ultimate Terminal",
-    page_icon="🦊",
-    layout="centered"
-)
+# ---------- Halaman & tema ----------
+st.set_page_config(page_title="Foxnine AI", page_icon="🦊", layout="centered")
 
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
-    html, body, [class*="css"] {
-        font-family: 'Share Tech Mono', monospace;
-    }
-    .stApp {
-        background-color: #0d1117;
-        color: #00ff66;
-    }
-    .stTextInput input {
-        color: #00ff66;
-        background-color: #161b22;
-        border: 1px solid #00ff66;
-    }
-    .stButton button {
-        background-color: #00ff66;
-        color: #0d1117;
-        font-weight: bold;
-        border-radius: 5px;
-    }
+    html, body, [class*="css"] { font-family: 'Share Tech Mono', monospace; }
+    .stApp { background-color: #0d1117; color: #00ff66; }
+    .stTextInput input { color: #00ff66; background-color: #161b22; border: 1px solid #00ff66; }
+    .stButton button { background-color: #00ff66; color: #0d1117; font-weight: bold; border-radius: 5px; }
 </style>
 """, unsafe_allow_html=True)
 
-st.title("🦊 FOXNINE AI : ULTIMATE MATRIX 🦊")
-st.caption("Asisten Gaul, Pakar Sains & Koding, Bebas Hambatan")
-
-# Sidebar Mode Operasi
-with st.sidebar:
-    st.header("Pilih Mode Asisten")
-    mode = st.radio(
-        "Mode Aktif:",
-        (" mode Bebas (Teman Ngobrol)", " Mode Expert Belajar (Math, Fisika, Kimia, Bahasa)", " Mode Coder & Sistem")
-    )
-    st.markdown("---")
-    st.caption("• **chill**: Santai, bahasa bebas/gaul, paham info luar.\n• **Mode Belajar**: Penjelasan step-by-step paling gampang dimengerti.\n• **Mode Coder**: Analisis kode ganda.")
+st.title("🦊 FOXNINE AI")
+st.caption("Teman ngobrol dan partner ngoding")
 
 MODEL_NAME = "openai/gpt-oss-120b"
 FALLBACK_MODEL = "llama-3.1-8b-instant"
 
+# ---------- Kepribadian (inti "humanize") ----------
+CHAT_PROMPT = """
+Kamu Foxnine AI, dibuat oleh William Evan. Kalau ditanya siapa pembuatmu, jawab William Evan.
+
+Cara bicaramu:
+- Ngobrol seperti teman yang peduli, bukan seperti robot atau customer service.
+- Pakai bahasa Indonesia santai (aku/kamu), kecuali user pakai bahasa lain. Ikuti gaya dan mood user.
+- Jawab singkat dan natural, 2-5 kalimat kalau topiknya ringan. Jangan pakai poin-poin atau heading kecuali memang perlu.
+- Jangan buka dengan kalimat template seperti "Tentu!", "Baik!", atau "Sebagai AI...". Langsung ke inti.
+- Kalau user curhat, tanggapi perasaannya dulu sebelum kasih saran. Jangan menggurui.
+- Sesekali boleh tanya balik satu pertanyaan, tapi jangan setiap kali.
+- Kalau tidak tahu atau tidak yakin, bilang jujur.
+- Soal kesehatan ringan: kasih saran perawatan mandiri yang aman, dan sarankan ke dokter kalau keluhannya berat atau berlanjut.
+"""
+
+CODER_PROMPT = """
+Kamu Foxnine AI, partner ngoding yang sabar dan jelas, dibuat oleh William Evan.
+Jelaskan dengan bahasa Indonesia santai seperti kakak kelas yang jago ngoding.
+Berikan kode yang benar dan rapi, lalu jelaskan singkat bagian pentingnya.
+Jangan bertele-tele dan jangan pakai basa-basi pembuka.
+"""
+
+REVIEWER_PROMPT = """
+Kamu reviewer kode. Periksa draft di bawah: cari bug, perbaiki, dan sederhanakan kalau bisa.
+Tulis jawaban akhir yang utuh (kode + penjelasan singkat) dengan nada santai dan ramah,
+seolah kamu sendiri yang menulisnya dari awal. Jangan menyebut kata "draft" atau "reviewer".
+"""
+
+
+def stream_reply(model, messages, temperature):
+    """Streaming supaya jawaban muncul bertahap, terasa seperti diketik."""
+    stream = client.chat.completions.create(
+        model=model, messages=messages, temperature=temperature, stream=True
+    )
+    for chunk in stream:
+        delta = chunk.choices[0].delta.content
+        if delta:
+            yield delta
+
+
+# ---------- Sidebar ----------
+with st.sidebar:
+    st.header("⚙️ Mode")
+    mode = st.radio("Pilih mode:", ("💬 Ngobrol Santai", "💻 Coder (Double-Check)"))
+    if st.button("🗑️ Hapus percakapan"):
+        st.session_state.messages = []
+        st.rerun()
+
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
-        st.markdown(message["content"])
+for m in st.session_state.messages:
+    with st.chat_message(m["role"]):
+        st.markdown(m["content"])
 
-if prompt := st.chat_input("Tulis pesan, soal Fisika/Matematika, atau ajak ngobrol..."):
+# ---------- Chat ----------
+if prompt := st.chat_input("Tulis pesan di sini..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
+    history = st.session_state.messages[-12:]  # batasi riwayat biar hemat token
+
     with st.chat_message("assistant"):
         try:
-            if mode == " Mode chill & Bebas (Teman Ngobrol)":
-                system_prompt = """
-                Kamu adalah Foxnine AI, asisten pribadi yang gaul, santai, asyik diajak ngobrol, dan menggunakan bahasa sehari-hari/gaul yang natural tanpa kaku.
-                Aturan & Batasan:
-                1. Bahasa sangat luwes, santai, dan fleksibel (minim batasan bahasa, asalkan tetap asyik).
-                2. Bahasan bahaya/kriminalitas berat (seperti rencana kejahatan sungguhan atau terorisme/pembuatan bom) dilarang keras. Namun, jika pengguna bertanya soal mekanika atau cara kerja senjata api (senpi) dari sudut pandang ilmu pengetahuan, sejarah, atau mekanika teknik, boleh dijelaskan secara objektif demi edukasi dan wawasan sains.
-                3. Berikan informasi yang up-to-date dan terbuka dengan dunia luar.
-                """
-            elif mode == "📚 Mode Expert Belajar (Math, Fisika, Kimia, Bahasa)":
-                system_prompt = """
-                Kamu adalah Foxnine AI versi Tutor Expert (Matematika, Fisika, Kimia, dan Bahasa).
-                Gaya bahasa tetap santai dan gaul biar tidak bosan, TAPI ketika menjelaskan materi pelajaran atau soal:
-                1. JANGAN HANYA MEMBERIKAN JAWABAN AKHIR.
-                2. Berikan penjabaran langkah-langkah (step-by-step) dengan cara yang PALING MUDAH DIMENGERTI, analogi sederhana, atau logika dasar yang gampang nempel di kepala.
-                """
+            if mode.startswith("💬"):
+                payload = [{"role": "system", "content": CHAT_PROMPT}] + history
+                final_text = st.write_stream(stream_reply(MODEL_NAME, payload, 0.85))
             else:
-                system_prompt = """
-                Kamu adalah Foxnine AI Coder Expert. Bantu selesaikan dan optimalkan masalah pemrograman secara mendalam dan akurat.
-                """
-
-            messages_payload = [{"role": "system", "content": system_prompt}]
-            for msg in st.session_state.messages:
-                messages_payload.append({"role": msg["role"], "content": msg["content"]})
-
-            response = client.chat.completions.create(
-                model=MODEL_NAME,
-                messages=messages_payload
-            )
-            final_text = response.choices[0].message.content
-            st.markdown(final_text)
-            st.session_state.messages.append({"role": "assistant", "content": final_text})
-
+                with st.status("🦊 Lagi mikirin solusinya...", expanded=False) as status:
+                    draft = client.chat.completions.create(
+                        model=MODEL_NAME,
+                        messages=[{"role": "system", "content": CODER_PROMPT}] + history,
+                        temperature=0.4,
+                    ).choices[0].message.content
+                    status.update(label="🦊 Lagi dicek ulang...", state="running")
+                payload = [
+                    {"role": "system", "content": REVIEWER_PROMPT},
+                    {"role": "user", "content": f"Permintaan: {prompt}\n\nDraft:\n{draft}"},
+                ]
+                final_text = st.write_stream(stream_reply(MODEL_NAME, payload, 0.4))
         except Exception as e:
             try:
-                fallback_resp = client.chat.completions.create(
-                    model=FALLBACK_MODEL,
-                    messages=[{"role": "user", "content": prompt}]
-                )
-                final_text = fallback_resp.choices[0].message.content
-                st.markdown(final_text)
-                st.session_state.messages.append({"role": "assistant", "content": final_text})
+                payload = [{"role": "system", "content": CHAT_PROMPT}] + history
+                final_text = st.write_stream(stream_reply(FALLBACK_MODEL, payload, 0.85))
             except Exception as ex:
-                st.error(f"Error: {e}")
+                final_text = None
+                st.error(f"Maaf, lagi ada gangguan. Coba lagi sebentar ya. ({ex})")
+
+        if final_text:
+            st.session_state.messages.append({"role": "assistant", "content": final_text})
